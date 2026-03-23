@@ -17,6 +17,7 @@
             justify-content: center;
             color: white;
             overflow: hidden;
+            margin: 0;
         }
 
         .glass {
@@ -26,15 +27,22 @@
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
+        /* Fixed cell size and shape */
         .cell {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             cursor: pointer;
+            width: 100%;
+            aspect-ratio: 1 / 1; /* Forces square shape */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
 
         .cell:hover:not(.taken) {
             background: rgba(255, 255, 255, 0.1);
-            transform: scale(0.98);
+            transform: scale(0.95);
         }
 
         .cell.taken {
@@ -45,12 +53,16 @@
             color: #3b82f6;
             text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
             animation: appear 0.3s ease-out forwards;
+            width: 60%;
+            height: 60%;
         }
 
         .mark-o {
             color: #ef4444;
             text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
             animation: appear 0.3s ease-out forwards;
+            width: 60%;
+            height: 60%;
         }
 
         @keyframes appear {
@@ -133,17 +145,17 @@
                 <p id="game-status" class="text-sm font-medium opacity-80 uppercase tracking-widest">Player X's Turn</p>
             </div>
 
-            <!-- Board -->
-            <div class="grid grid-cols-3 gap-3 aspect-square mb-8">
-                <div onclick="handleCellClick(0)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="0"></div>
-                <div onclick="handleCellClick(1)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="1"></div>
-                <div onclick="handleCellClick(2)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="2"></div>
-                <div onclick="handleCellClick(3)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="3"></div>
-                <div onclick="handleCellClick(4)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="4"></div>
-                <div onclick="handleCellClick(5)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="5"></div>
-                <div onclick="handleCellClick(6)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="6"></div>
-                <div onclick="handleCellClick(7)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="7"></div>
-                <div onclick="handleCellClick(8)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="8"></div>
+            <!-- Board: Uses a fixed-width grid to prevent stretching -->
+            <div class="grid grid-cols-3 gap-3 w-full max-w-[400px] mx-auto mb-8">
+                <div onclick="handleCellClick(0)" class="cell glass rounded-2xl" data-index="0"></div>
+                <div onclick="handleCellClick(1)" class="cell glass rounded-2xl" data-index="1"></div>
+                <div onclick="handleCellClick(2)" class="cell glass rounded-2xl" data-index="2"></div>
+                <div onclick="handleCellClick(3)" class="cell glass rounded-2xl" data-index="3"></div>
+                <div onclick="handleCellClick(4)" class="cell glass rounded-2xl" data-index="4"></div>
+                <div onclick="handleCellClick(5)" class="cell glass rounded-2xl" data-index="5"></div>
+                <div onclick="handleCellClick(6)" class="cell glass rounded-2xl" data-index="6"></div>
+                <div onclick="handleCellClick(7)" class="cell glass rounded-2xl" data-index="7"></div>
+                <div onclick="handleCellClick(8)" class="cell glass rounded-2xl" data-index="8"></div>
             </div>
 
             <!-- Controls -->
@@ -208,8 +220,8 @@
             board[index] = currentPlayer;
             const cells = document.querySelectorAll('.cell');
             cells[index].innerHTML = currentPlayer === 'X' ? 
-                `<svg class="mark-x w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M6 18L18 6M6 6l12 12" /></svg>` : 
-                `<svg class="mark-o w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="4" /></svg>`;
+                `<svg class="mark-x" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M6 18L18 6M6 6l12 12" /></svg>` : 
+                `<svg class="mark-o" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="4" /></svg>`;
             cells[index].classList.add('taken');
 
             checkResult();
@@ -222,8 +234,6 @@
 
         function botMove() {
             if (!gameActive) return;
-            
-            // Minimax algorithm for unbeatable AI
             const bestMove = minimax(board, "O").index;
             makeMove(bestMove);
         }
@@ -318,7 +328,6 @@
             resetGame();
         }
 
-        // Minimax Algorithm Implementation
         function minimax(newBoard, player) {
             const availSpots = newBoard.map((v, i) => v === "" ? i : null).filter(v => v !== null);
 
