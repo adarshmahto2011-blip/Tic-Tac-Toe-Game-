@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Tic Tac Toe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle at top left, #1a1a2e, #16213e);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow: hidden;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .cell {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            cursor: pointer;
+        }
+
+        .cell:hover:not(.taken) {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(0.98);
+        }
+
+        .cell.taken {
+            cursor: default;
+        }
+
+        .mark-x {
+            color: #3b82f6;
+            text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            animation: appear 0.3s ease-out forwards;
+        }
+
+        .mark-o {
+            color: #ef4444;
+            text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+            animation: appear 0.3s ease-out forwards;
+        }
+
+        @keyframes appear {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .winning-cell {
+            background: rgba(255, 255, 255, 0.15) !important;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .hidden { display: none; }
+
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Container -->
+    <div class="w-full max-w-md p-6">
+        
+        <!-- Menu Screen -->
+        <div id="menu-screen" class="glass rounded-3xl p-8 text-center floating">
+            <h1 class="text-5xl font-extrabold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-red-400">
+                TIC TAC TOE
+            </h1>
+            <p class="text-blue-200 mb-10 opacity-80">Choose your challenge</p>
+            
+            <div class="space-y-4">
+                <button onclick="startGame('multi')" class="w-full py-4 px-6 glass hover:bg-white hover:text-slate-900 transition-all rounded-xl font-bold flex items-center justify-between group">
+                    <span>Local Multiplayer</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </button>
+                
+                <button onclick="startGame('bot')" class="w-full py-4 px-6 glass hover:bg-white hover:text-slate-900 transition-all rounded-xl font-bold flex items-center justify-between group">
+                    <span>Play Against Bot</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden">
+            <!-- Header Stats -->
+            <div class="flex justify-between items-center mb-6 px-2">
+                <div id="p1-score" class="text-center">
+                    <p class="text-xs uppercase tracking-widest text-blue-400 font-bold mb-1">Player X</p>
+                    <p class="text-3xl font-bold" id="score-x">0</p>
+                </div>
+                <button onclick="backToMenu()" class="p-2 glass rounded-full hover:bg-white/10 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                </button>
+                <div id="p2-score" class="text-center">
+                    <p id="p2-label" class="text-xs uppercase tracking-widest text-red-400 font-bold mb-1">Player O</p>
+                    <p class="text-3xl font-bold" id="score-o">0</p>
+                </div>
+            </div>
+
+            <!-- Status Message -->
+            <div id="status-box" class="glass rounded-2xl p-4 mb-6 text-center">
+                <p id="game-status" class="text-sm font-medium opacity-80 uppercase tracking-widest">Player X's Turn</p>
+            </div>
+
+            <!-- Board -->
+            <div class="grid grid-cols-3 gap-3 aspect-square mb-8">
+                <div onclick="handleCellClick(0)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="0"></div>
+                <div onclick="handleCellClick(1)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="1"></div>
+                <div onclick="handleCellClick(2)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="2"></div>
+                <div onclick="handleCellClick(3)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="3"></div>
+                <div onclick="handleCellClick(4)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="4"></div>
+                <div onclick="handleCellClick(5)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="5"></div>
+                <div onclick="handleCellClick(6)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="6"></div>
+                <div onclick="handleCellClick(7)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="7"></div>
+                <div onclick="handleCellClick(8)" class="cell glass rounded-2xl flex items-center justify-center text-4xl font-bold" data-index="8"></div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex gap-4">
+                <button onclick="resetGame()" class="flex-1 py-4 glass rounded-xl font-bold hover:bg-blue-500 transition-colors flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 110 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                    </svg>
+                    Reset Board
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Win Modal -->
+    <div id="modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 p-6">
+        <div class="glass max-w-sm w-full rounded-3xl p-10 text-center transform scale-90 transition-transform" id="modal-content">
+            <div id="modal-icon" class="mb-6 flex justify-center"></div>
+            <h2 id="modal-title" class="text-3xl font-bold mb-2">Victory!</h2>
+            <p id="modal-body" class="text-blue-200 mb-8">Player X has won this round.</p>
+            <button onclick="closeModal()" class="w-full py-4 bg-white text-slate-900 rounded-xl font-bold hover:bg-blue-400 hover:text-white transition-all">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        let board = ["", "", "", "", "", "", "", "", ""];
+        let currentPlayer = "X";
+        let gameActive = true;
+        let gameMode = "multi"; // 'multi' or 'bot'
+        let scores = { X: 0, O: 0 };
+
+        const winConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+            [0, 4, 8], [2, 4, 6]             // Diagonals
+        ];
+
+        function startGame(mode) {
+            gameMode = mode;
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('p2-label').textContent = mode === 'bot' ? 'Bot (O)' : 'Player O';
+            resetGame();
+        }
+
+        function backToMenu() {
+            document.getElementById('menu-screen').classList.remove('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+        }
+
+        function handleCellClick(index) {
+            if (board[index] !== "" || !gameActive || (gameMode === 'bot' && currentPlayer === 'O')) return;
+
+            makeMove(index);
+
+            if (gameActive && gameMode === 'bot' && currentPlayer === 'O') {
+                setTimeout(botMove, 600);
+            }
+        }
+
+        function makeMove(index) {
+            board[index] = currentPlayer;
+            const cells = document.querySelectorAll('.cell');
+            cells[index].innerHTML = currentPlayer === 'X' ? 
+                `<svg class="mark-x w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M6 18L18 6M6 6l12 12" /></svg>` : 
+                `<svg class="mark-o w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="4" /></svg>`;
+            cells[index].classList.add('taken');
+
+            checkResult();
+            
+            if (gameActive) {
+                currentPlayer = currentPlayer === "X" ? "O" : "X";
+                updateStatus();
+            }
+        }
+
+        function botMove() {
+            if (!gameActive) return;
+            
+            // Minimax algorithm for unbeatable AI
+            const bestMove = minimax(board, "O").index;
+            makeMove(bestMove);
+        }
+
+        function checkResult() {
+            let roundWon = false;
+            let winningLine = null;
+
+            for (let i = 0; i < winConditions.length; i++) {
+                const [a, b, c] = winConditions[i];
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    roundWon = true;
+                    winningLine = [a, b, c];
+                    break;
+                }
+            }
+
+            if (roundWon) {
+                highlightWinner(winningLine);
+                scores[currentPlayer]++;
+                updateScores();
+                showModal('win', currentPlayer);
+                gameActive = false;
+                return;
+            }
+
+            if (!board.includes("")) {
+                showModal('draw');
+                gameActive = false;
+                return;
+            }
+        }
+
+        function highlightWinner(line) {
+            const cells = document.querySelectorAll('.cell');
+            line.forEach(index => {
+                cells[index].classList.add('winning-cell');
+            });
+        }
+
+        function updateStatus() {
+            const status = document.getElementById('game-status');
+            const turnText = gameMode === 'bot' && currentPlayer === 'O' ? "Bot's Turn..." : `Player ${currentPlayer}'s Turn`;
+            status.textContent = turnText;
+            status.style.color = currentPlayer === 'X' ? '#60a5fa' : '#f87171';
+        }
+
+        function updateScores() {
+            document.getElementById('score-x').textContent = scores.X;
+            document.getElementById('score-o').textContent = scores.O;
+        }
+
+        function resetGame() {
+            board = ["", "", "", "", "", "", "", "", ""];
+            currentPlayer = "X";
+            gameActive = true;
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.innerHTML = "";
+                cell.classList.remove('taken', 'winning-cell');
+            });
+            updateStatus();
+        }
+
+        function showModal(type, winner) {
+            const modal = document.getElementById('modal');
+            const content = document.getElementById('modal-content');
+            const title = document.getElementById('modal-title');
+            const body = document.getElementById('modal-body');
+            const icon = document.getElementById('modal-icon');
+
+            if (type === 'win') {
+                title.textContent = winner === 'X' ? 'Player X Wins!' : (gameMode === 'bot' ? 'Bot Wins!' : 'Player O Wins!');
+                body.textContent = 'A masterful performance on the grid.';
+                icon.innerHTML = winner === 'X' ? 
+                    `<div class="p-4 rounded-full bg-blue-500/20"><svg class="w-16 h-16 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" /></svg></div>` :
+                    `<div class="p-4 rounded-full bg-red-500/20"><svg class="w-16 h-16 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="3" /></svg></div>`;
+            } else {
+                title.textContent = "It's a Draw!";
+                body.textContent = "Two great minds thinking alike.";
+                icon.innerHTML = `<div class="p-4 rounded-full bg-slate-500/20"><svg class="w-16 h-16 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>`;
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => content.classList.remove('scale-90'), 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            resetGame();
+        }
+
+        // Minimax Algorithm Implementation
+        function minimax(newBoard, player) {
+            const availSpots = newBoard.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+
+            if (checkWin(newBoard, "X")) return { score: -10 };
+            if (checkWin(newBoard, "O")) return { score: 10 };
+            if (availSpots.length === 0) return { score: 0 };
+
+            const moves = [];
+            for (let i = 0; i < availSpots.length; i++) {
+                const move = {};
+                move.index = availSpots[i];
+                newBoard[availSpots[i]] = player;
+
+                if (player === "O") {
+                    const result = minimax(newBoard, "X");
+                    move.score = result.score;
+                } else {
+                    const result = minimax(newBoard, "O");
+                    move.score = result.score;
+                }
+
+                newBoard[availSpots[i]] = "";
+                moves.push(move);
+            }
+
+            let bestMove;
+            if (player === "O") {
+                let bestScore = -Infinity;
+                for (let i = 0; i < moves.length; i++) {
+                    if (moves[i].score > bestScore) {
+                        bestScore = moves[i].score;
+                        bestMove = i;
+                    }
+                }
+            } else {
+                let bestScore = Infinity;
+                for (let i = 0; i < moves.length; i++) {
+                    if (moves[i].score < bestScore) {
+                        bestScore = moves[i].score;
+                        bestMove = i;
+                    }
+                }
+            }
+            return moves[bestMove];
+        }
+
+        function checkWin(board, player) {
+            return winConditions.some(condition => {
+                return condition.every(index => board[index] === player);
+            });
+        }
+    </script>
+</body>
+</html>
